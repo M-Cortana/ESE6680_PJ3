@@ -1,0 +1,51 @@
+// VerilogA for ESE6680_PJ3, 10BIT_IDEAL_DAC, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+module IDEAL_DAC_10BIT(IN0, IN1, IN2, IN3, IN4, IN5, IN6, IN7, IN8, IN9, CLK, OUT);
+input IN0, IN1, IN2, IN3, IN4, IN5, IN6, IN7, IN8, IN9, CLK;
+output OUT;
+electrical IN0, IN1, IN2, IN3, IN4, IN5, IN6, IN7, IN8, IN9, CLK;
+electrical OUT;
+parameter real Analog_Reference_Voltage = 4;
+parameter real Digital_Reference_Voltage = 2.5;
+
+integer Din;
+
+analog function integer DIN;
+	input IN0, IN1, IN2, IN3, IN4, IN5, IN6, IN7, IN8, IN9;
+	real IN0, IN1, IN2, IN3, IN4, IN5, IN6, IN7, IN8, IN9;
+	begin
+		DIN = 0;
+		DIN = DIN + (IN0 > Digital_Reference_Voltage ? 1 << 0 : 0);
+		DIN = DIN + (IN1 > Digital_Reference_Voltage ? 1 << 1 : 0);
+		DIN = DIN + (IN2 > Digital_Reference_Voltage ? 1 << 2 : 0);
+		DIN = DIN + (IN3 > Digital_Reference_Voltage ? 1 << 3 : 0);
+		DIN = DIN + (IN4 > Digital_Reference_Voltage ? 1 << 4 : 0);
+		DIN = DIN + (IN5 > Digital_Reference_Voltage ? 1 << 5 : 0);
+		DIN = DIN + (IN6 > Digital_Reference_Voltage ? 1 << 6 : 0);
+		DIN = DIN + (IN7 > Digital_Reference_Voltage ? 1 << 7 : 0);
+		DIN = DIN + (IN8 > Digital_Reference_Voltage ? 1 << 8 : 0);
+		DIN = DIN + (IN9 > Digital_Reference_Voltage ? 1 << 9 : 0);
+	end
+endfunction
+
+
+analog begin
+	V(OUT) <+ slew(Analog_Reference_Voltage * (1.0*Din/1023.0));
+	@ (initial_step) begin
+		Din = DIN(V(IN0), V(IN1), V(IN2), V(IN3), V(IN4), V(IN5), V(IN6), V(IN7), V(IN8), V(IN9));
+	end
+	@ (cross(V(CLK) - Digital_Reference_Voltage, 1)) begin
+		Din = DIN(V(IN0), V(IN1), V(IN2), V(IN3), V(IN4), V(IN5), V(IN6), V(IN7), V(IN8), V(IN9));
+		//$display(">>>Din = %d<<<", Din);
+	end
+	@ (final_step) begin
+		$display(">>>Din = %d<<<", Din);
+	end
+	
+	
+
+end
+
+endmodule
